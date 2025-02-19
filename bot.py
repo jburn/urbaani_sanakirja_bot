@@ -5,7 +5,7 @@ from uuid import uuid4
 
 database = WordDatabase()
 
-def build_reply(word: str) -> str:
+def build_reply(word: tuple) -> str:
     title = word[2]
     explanation = word[3]
     examples = word[4]
@@ -52,8 +52,8 @@ async def start(update: Update, context: CallbackContext) -> None:
 async def word_handler(update: Update, context: CallbackContext):
     definitions = database.get_definitions(update.message.text)
     if not definitions:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="Sanaa ei löytynyt")
-        return None
+        await update.message.reply_text("Sanaa ei löytynyt")
+        return
     index = 0
     out_str = build_reply(definitions[index])
     keyboard = build_keyboard(definitions, index)
