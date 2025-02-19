@@ -126,7 +126,7 @@ async def test_word_handler_no_definition_found(monkeypatch):
         "Sanaa ei löytynyt"
     )
 
-@pytest.mark.skip
+@pytest.mark.asyncio
 async def test_word_handler_definition_found(monkeypatch):
     """
     Test message handler when definition(s) are found in database
@@ -136,7 +136,12 @@ async def test_word_handler_definition_found(monkeypatch):
         (2, 'word2', 'Word2', 'Definition of word2', 'Example of word2 usage', 'User2', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
     ]
 
+    expected_keyboard = InlineKeyboardMarkup([])
+    expected_reply = "expected"
+
     monkeypatch.setattr(database, 'get_definitions', lambda text: mock_definitions)
+    monkeypatch.setattr(bot, 'build_keyboard', lambda defs, index: expected_keyboard)
+    monkeypatch.setattr(bot, 'build_reply', lambda text: expected_reply)
 
     mock_message = AsyncMock()
     mock_message.text = "word"
@@ -148,6 +153,5 @@ async def test_word_handler_definition_found(monkeypatch):
     mock_context = MagicMock(spec=CallbackContext)
 
     await word_handler(mock_update, mock_context)
-
-
-
+    
+    mock_message.reply_text.assert_called_once_with(expected_reply, reply_markup=expected_keyboard, parse_mode=constants.ParseMode.HTML)
