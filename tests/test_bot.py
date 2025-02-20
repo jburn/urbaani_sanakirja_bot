@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from telegram import Update
+from telegram import Update, CallbackQuery, InlineQuery
 from telegram.ext import CallbackContext
 from bot import *
 
@@ -104,6 +104,7 @@ async def test_start():
         f'Moro {mock_user.first_name}! Lähetä minulle jokin sana, niin yritän etsiä sille selityksen.'
     )
 
+# Test word handler
 @pytest.mark.asyncio
 async def test_word_handler_no_definition_found(monkeypatch):
     """
@@ -155,3 +156,160 @@ async def test_word_handler_definition_found(monkeypatch):
     await word_handler(mock_update, mock_context)
     
     mock_message.reply_text.assert_called_once_with(expected_reply, reply_markup=expected_keyboard, parse_mode=constants.ParseMode.HTML)
+
+# Test callback handler
+@pytest.mark.asyncio
+async def test_callback_handler_none_callback():
+    """
+    Test callback handler when callback data is none
+    """
+    mock_query = AsyncMock(spec=CallbackQuery)
+    mock_query.data = "none"
+    mock_query.answer = AsyncMock()
+
+    mock_update = AsyncMock(spec=Update, callback_query=mock_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+    
+    await callback_handler(mock_update, mock_context)
+
+    mock_query.answer.assert_called_once()
+
+    mock_query.edit_message_text.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_callback_handler_invalid_callback():
+    """
+    Test callback handler when callback data is invalid
+    """
+    mock_query = AsyncMock(spec=CallbackQuery)
+    mock_query.data = "invalid"
+    mock_query.answer = AsyncMock()
+
+    mock_update = AsyncMock(spec=Update, callback_query=mock_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    await callback_handler(mock_update, mock_context)
+
+    mock_query.answer.assert_called_once()
+
+    mock_query.edit_message_text.assert_called_once_with("Invalid callback data")
+
+@pytest.mark.asyncio
+async def test_callback_handler_no_definitions(monkeypatch):
+    monkeypatch.setattr(database, 'get_definitions', lambda word: [])
+    mock_query = AsyncMock(spec=CallbackQuery)
+    mock_query.data = "def:word:1"
+    mock_query.answer = AsyncMock()
+
+    mock_update = AsyncMock(spec=Update, callback_query=mock_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    await callback_handler(mock_update, mock_context)
+
+    mock_query.answer.assert_called_once()
+
+    mock_query.edit_message_text.assert_called_once_with("Sanaa ei löytynyt")
+
+@pytest.mark.asyncio
+async def test_callback_handler_valid_definitions(monkeypatch):
+    mock_definitions = [
+        (1, 'word', 'Word', 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
+        (2, 'word', 'Word', 'Definition of word2', 'Example of word2 usage', 'User2', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
+    ]
+    monkeypatch.setattr(database, 'get_definitions', lambda word: mock_definitions)
+    
+    mock_query = AsyncMock(spec=CallbackQuery)
+    mock_query.data = "def:word:1"
+    mock_query.answer = AsyncMock()
+
+    mock_update = AsyncMock(spec=Update, callback_query=mock_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    expected_reply = "expected"
+    mock_build_reply = MagicMock(return_value=expected_reply)
+
+    expected_keyboard = InlineKeyboardMarkup([])
+    mock_build_keyboard = MagicMock(return_value=expected_keyboard)
+
+    monkeypatch.setattr("bot.build_reply", mock_build_reply)
+    monkeypatch.setattr("bot.build_keyboard", mock_build_keyboard)
+
+    await callback_handler(mock_update, mock_context)
+
+    mock_query.answer.assert_called_once()
+
+    mock_build_reply.assert_called_once_with(mock_definitions[1])
+    mock_build_keyboard.assert_called_once_with(mock_definitions, 1)
+
+    mock_query.edit_message_text.assert_called_once_with(
+        expected_reply,
+        reply_markup=expected_keyboard,
+        parse_mode=constants.ParseMode.HTML
+    )
+
+# Test inline query
+@pytest.mark.asyncio
+async def test_inline_query_empty():
+    mock_inline_query = AsyncMock(spec=InlineQuery)
+    mock_inline_query.query = ""
+    mock_update = AsyncMock(spec=Update, inline_query=mock_inline_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    await inline_query(mock_update, mock_context)
+
+    mock_update.inline_query.answer.assert_not_called()
+    
+@pytest.mark.asyncio
+async def test_inline_query_no_definitions(monkeypatch):
+    mock_get_definitions = MagicMock(return_value=[])
+    monkeypatch.setattr(database, "get_definitions", mock_get_definitions)
+    mock_inline_query = AsyncMock(spec=InlineQuery)
+    mock_inline_query.query = "invalid_invalid"
+
+    mock_update = AsyncMock(spec=Update, inline_query=mock_inline_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    await inline_query(mock_update, mock_context)
+
+    mock_get_definitions.assert_called_once_with("invalid_invalid")
+    mock_update.inline_query.answer.assert_called_once()
+
+    results = mock_update.inline_query.answer.call_args[0][0]
+    assert len(results) == 1
+    assert isinstance(results[0], InlineQueryResultArticle)
+    assert results[0].title == "Ei tuloksia"
+    assert "Selityksiä ei löytynyt" in results[0].input_message_content.message_text
+    
+@pytest.mark.asyncio
+async def test_inline_query_valid_definitions(monkeypatch):
+    mock_definitions = [
+        (1, 'word', 'Word', 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
+        (2, 'word', 'Word', 'Definition of word2', 'Example of word2 usage', 'User2', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
+    ]
+    mock_get_definitions = MagicMock(return_value=mock_definitions)
+    monkeypatch.setattr(database, "get_definitions", mock_get_definitions)
+    mock_inline_query = AsyncMock(spec=InlineQuery)
+    mock_inline_query.query = "word"
+
+    mock_update = AsyncMock(spec=Update, inline_query=mock_inline_query)
+    mock_context = AsyncMock(spec=CallbackContext)
+
+    await inline_query(mock_update, mock_context)
+
+    mock_get_definitions.assert_called_once_with("word")
+    mock_update.inline_query.answer.assert_called_once()
+
+    results = mock_update.inline_query.answer.call_args[0][0]
+    assert len(results) == 2
+    assert isinstance(results[0], InlineQueryResultArticle)
+    assert results[0].title == "Selitys #1"
+    assert "Käyttäjältä: User | <i>Postattu dd.mm.yyyy</i>" in results[0].input_message_content.message_text
+
+def test_get_application_handlers():
+    results = get_application_handlers()
+    assert len(results) == 4
+    assert isinstance(results[0], CommandHandler)
+    assert isinstance(results[1], MessageHandler)
+    assert isinstance(results[2], CallbackQueryHandler)
+    assert isinstance(results[3], InlineQueryHandler)
