@@ -1,6 +1,12 @@
+"""
+Class for interacting with the word dictionary database
+"""
 import sqlite3
 
 class WordDatabase:
+    """
+    Database class for interacting with the word database
+    """
     def __init__(self, name='words.db'):
         self.name = name
         self.conn = sqlite3.connect(self.name)
@@ -8,6 +14,9 @@ class WordDatabase:
         self.create_table()
 
     def create_table(self):
+        """
+        Create table for storing word definitions
+        """
         self.cursor.execute('''
         CREATE TABLE IF NOT EXISTS words(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,20 +33,38 @@ class WordDatabase:
         self.conn.commit()
 
     def delete_duplicates(self):
-        self.cursor.execute('''DELETE FROM words
-        WHERE id NOT IN (
+        """
+        Delete duplicate definitions from database
+        """
+        self.cursor.execute('''
+        DELETE FROM words WHERE id NOT IN (
             SELECT MIN(id)
             FROM words
             GROUP BY word, explanation
-        );''')
+        );
+        ''')
         self.conn.commit()
 
-    def definition_exists(self, word, explanation):
+    def definition_exists(self, word: str, explanation: str) -> bool:
+        """
+        Check if a duplicate definition exists in the database¨
+
+        returns: True if duplicate exists, False if does not
+        """
         word_lower = word.lower()
-        self.cursor.execute('SELECT 1 FROM words WHERE word = ? AND explanation = ?', (word_lower, explanation))
+        self.cursor.execute(
+            'SELECT 1 FROM words WHERE word = ? AND explanation = ?',
+            (word_lower, explanation)
+            )
         return self.cursor.fetchone() is not None
 
-    def insert_definition(self, word: str, title:str, explanation:str, examples:str, user:str, date:str, likes:str, dislikes:str, labels:str):
+    def insert_definition(self, word_obj: tuple) -> bool:
+        """
+        Insert a new definition into the database
+
+        returns: boolean indicating if the operation was a success
+        """
+        word, title, explanation, examples, user, date, likes, dislikes, labels = word_obj
         if self.definition_exists(word, explanation):
             return False
         try:
@@ -50,15 +77,28 @@ class WordDatabase:
         except sqlite3.Error as e:
             print(f"Error when inserting into database: {e}")
             return False
-        
-    def get_all_definitions(self):
+
+    def get_all_definitions(self) -> list:
+        """
+        Return all database entries for words
+
+        returns: all definitions from the database
+        """
         self.cursor.execute('SELECT * from words')
         return self.cursor.fetchall()
 
-    def get_definitions(self, word):
+    def get_definitions(self, word: str) -> list:
+        """
+        Get definitions for word
+
+        returns: list of tuples containing word definitions
+        """
         word_lower = word.lower()
         self.cursor.execute('SELECT * FROM words WHERE word = ?', (word_lower,))
         return self.cursor.fetchall()
-    
+
     def close(self):
+        """
+        Close database connection
+        """
         self.conn.close()

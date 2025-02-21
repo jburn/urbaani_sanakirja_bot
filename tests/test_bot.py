@@ -101,7 +101,8 @@ async def test_start():
     await start(mock_update, mock_context)
 
     mock_message.reply_text.assert_called_once_with(
-        f'Moro {mock_user.first_name}! Lähetä minulle jokin sana, niin yritän etsiä sille selityksen.'
+        f"Moro {mock_user.first_name}! "
+        "Lähetä minulle jokin sana, niin yritän etsiä sille selityksen."
     )
 
 # Test word handler

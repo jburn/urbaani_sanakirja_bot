@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 @patch('main.getenv', return_value=None)
 def test_main_missing_token(mock_getenv):
 
-    with pytest.raises(ValueError, match="Failed to open TOKEN file"):
+    with pytest.raises(ValueError, match="Failed to get TOKEN"):
         main.main()
 
     mock_getenv.assert_called_once_with("TELEGRAM_BOT_TOKEN")

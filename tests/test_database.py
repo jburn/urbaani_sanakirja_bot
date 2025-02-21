@@ -27,16 +27,16 @@ def test_db():
     conn.close()
 
 def test_insert_definition_successful(test_db):
-    result = test_db.insert_definition('word3', 'Word3', 'Definition of word3', 'Example of word3 usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)')
+    result = test_db.insert_definition(('word3', 'Word3', 'Definition of word3', 'Example of word3 usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'))
     assert result == True
     assert len(test_db.get_definitions('word3')) == 1
 
 def test_insert_definition_exists(test_db):
-    result = test_db.insert_definition('word', 'Word', 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)')
+    result = test_db.insert_definition(('word', 'Word', 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'))
     assert result == False
 
 def test_insert_definition_error(test_db):
-    result = test_db.insert_definition('', None, 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)')
+    result = test_db.insert_definition(('', None, 'Definition of word', 'Example of word usage', 'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'))
     assert result == False
 
 def test_delete_duplicates(test_db):
