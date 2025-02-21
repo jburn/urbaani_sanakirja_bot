@@ -6,6 +6,7 @@ __pycache__/
 venv/
 token
 *.db
+.env
 
 # C extensions
 *.so
