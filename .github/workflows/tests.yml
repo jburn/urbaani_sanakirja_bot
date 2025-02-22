@@ -14,8 +14,14 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install codecov
+          pip install genbadge[coverage]
       - name: Run tests
-        run: pytest --cov=. tests/ --cov-report=xml -v 
-      - name: Upload coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash)
+        run: pytest --cov=. tests/ --cov-report=xml -v
+      - name: Generate coverage badge
+        run: genbadge coverage -o coverage.svg
+      - name: Upload coverage badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: coverage.svg
+      
