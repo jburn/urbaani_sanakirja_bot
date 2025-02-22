@@ -18,7 +18,7 @@ jobs:
       - name: Run tests
         run: pytest --cov=. tests/ --cov-report=xml -v
       - name: Generate coverage badge
-        run: genbadge coverage -o coverage.svg
+        run: genbadge coverage.xml -o coverage.svg
       - name: Upload coverage badge
         uses: actions/upload-artifact@v4
         with:
