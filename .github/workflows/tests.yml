@@ -12,6 +12,10 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install codecov
       - name: Run tests
-        run: pytest --cov=. tests/ -v 
+        run: pytest --cov=. tests/ --cov-report=xml -v 
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
