@@ -1,0 +1,13 @@
+name: Pylint
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: kgpl/gh-pylint@v1
+        with:
+          package-path: . ./tests/
+          python-version: 3.11
+  
