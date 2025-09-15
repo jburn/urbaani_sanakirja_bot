@@ -12,7 +12,10 @@ class WordDatabase:
     def __init__(self, name='words.db'):
         dotenv.load_dotenv()
         word_db = os.getenv("WORD_DATABASE")
-        self.name = word_db
+        if not word_db:
+            self.name = name
+        else:
+            self.name = word_db
         self.conn = sqlite3.connect(self.name)
         self.cursor = self.conn.cursor()
         self.create_table()
