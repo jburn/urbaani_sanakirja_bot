@@ -2,13 +2,17 @@
 Class for interacting with the word dictionary database
 """
 import sqlite3
+import dotenv
+import os
 
 class WordDatabase:
     """
     Database class for interacting with the word database
     """
     def __init__(self, name='words.db'):
-        self.name = name
+        dotenv.load_dotenv()
+        word_db = os.getenv("WORD_DATABASE")
+        self.name = word_db
         self.conn = sqlite3.connect(self.name)
         self.cursor = self.conn.cursor()
         self.create_table()
