@@ -1,12 +1,13 @@
 """
 Main module for running the bot
 """
+import asyncio
 from os import getenv
 from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
-from bot import get_application_handlers
+from bot import get_application_handlers, periodic_scrape
 
-def main():
+async def main():
     """
     Main function for running the bot
     """
@@ -17,7 +18,18 @@ def main():
 
     app = ApplicationBuilder().token(token).build()
     app.add_handlers(get_application_handlers())
-    app.run_polling(drop_pending_updates=True)
+
+    await app.initialize()
+    await app.start()
+
+    asyncio.create_task(periodic_scrape())
+
+    try:
+        await app.updater.start_polling(drop_pending_updates=True)
+        await asyncio.Event().wait()
+    finally:
+        await app.stop()
+        await app.shutdown()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

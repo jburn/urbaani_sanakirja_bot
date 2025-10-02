@@ -2,8 +2,8 @@
 Class for interacting with the word dictionary database
 """
 import sqlite3
-import dotenv
 import os
+import dotenv
 
 class WordDatabase:
     """
@@ -29,41 +29,16 @@ class WordDatabase:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             word TEXT NOT NULL,
             title TEXT NOT NULL,
-            explanation TEXT,
+            explanation TEXT NOT NULL,
             examples TEXT,
             user TEXT,
             date TEXT,
-            likes TEXT,
-            dislikes TEXT,
-            labels TEXT)
+            upvotes TEXT,
+            downvotes TEXT,
+            labels TEXT,
+            UNIQUE(word, title, explanation));
         ''')
         self.conn.commit()
-
-    def delete_duplicates(self):
-        """
-        Delete duplicate definitions from database
-        """
-        self.cursor.execute('''
-        DELETE FROM words WHERE id NOT IN (
-            SELECT MIN(id)
-            FROM words
-            GROUP BY word, explanation
-        );
-        ''')
-        self.conn.commit()
-
-    def definition_exists(self, word: str, explanation: str) -> bool:
-        """
-        Check if a duplicate definition exists in the database¨
-
-        returns: True if duplicate exists, False if does not
-        """
-        word_lower = word.lower()
-        self.cursor.execute(
-            'SELECT 1 FROM words WHERE word = ? AND explanation = ?',
-            (word_lower, explanation)
-            )
-        return self.cursor.fetchone() is not None
 
     def insert_definition(self, word_obj: tuple) -> bool:
         """
@@ -71,18 +46,15 @@ class WordDatabase:
 
         returns: boolean indicating if the operation was a success
         """
-        word, title, explanation, examples, user, date, likes, dislikes, labels = word_obj
-        if self.definition_exists(word, explanation):
-            return False
+        word, title, explanation, examples, user, date, upvotes, downvotes, labels = word_obj
         try:
             self.cursor.execute('''
-                INSERT INTO words (word, title, explanation, examples, user, date, likes, dislikes, labels)
+                INSERT INTO words (word, title, explanation, examples, user, date, upvotes, downvotes, labels)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (word, title, explanation, examples, user, date, likes, dislikes, labels))
+                ''', (word, title, explanation, examples, user, date, upvotes, downvotes, labels))
             self.conn.commit()
-            return True
-        except sqlite3.Error as e:
-            print(f"Error when inserting into database: {e}")
+            return self.cursor.rowcount > 0
+        except sqlite3.Error:
             return False
 
     def get_all_definitions(self) -> list:

@@ -1,6 +1,7 @@
 """
 Bot functionality module for urbaani_sanakirja_bot
 """
+import asyncio
 from uuid import uuid4
 from telegram import (
     Update,
@@ -19,8 +20,27 @@ from telegram.ext import (
     InlineQueryHandler
 )
 from word_database import WordDatabase
+from scraper import scan_for_links, scan_for_words
 
 database = WordDatabase()
+
+async def run_scraper():
+    """
+    Run scraper to get words for backend
+    """
+    links = await scan_for_links()
+    await scan_for_words(links, database)
+
+async def periodic_scrape():
+    """
+    Periodically scrape for new words to add to database
+    """
+    while True:
+        try:
+            await run_scraper()
+        except Exception as e:
+            print(f"Exception when scraping: {e}")
+        await asyncio.sleep(7 * 24 * 60 * 60)
 
 def build_reply(word: tuple) -> str:
     """
