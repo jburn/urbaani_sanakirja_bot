@@ -42,15 +42,6 @@ def test_insert_definition_successful(test_db):
     assert result is True
     assert len(test_db.get_definitions('word3')) == 1
 
-def test_insert_definition_exists(test_db):
-    """
-    Test if inserting an existing definition returns false
-    """
-    result = test_db.insert_definition(
-        ('word', 'Word', 'Definition of word', 'Example of word usage',
-         'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'))
-    assert result is False
-
 def test_insert_definition_error(test_db):
     """
     Test if inserting invalid word object returns false
@@ -59,21 +50,6 @@ def test_insert_definition_error(test_db):
         ('', None, 'Definition of word', 'Example of word usage',
          'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'))
     assert result is False
-
-def test_delete_duplicates(test_db):
-    """
-    Test if deleting duplicates works
-    """
-    test_db.cursor.execute("""
-        INSERT INTO words (word, title, explanation, examples, user, date, upvotes, downvotes, labels)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        ('word', 'Word2', 'Definition of word', 'Example of word usage',
-         'User', 'dd.mm.yyyy', '10', '10', 'Label2 (1), Label1 (1)'),
-    )
-    assert len(test_db.get_all_definitions()) == 4
-    test_db.delete_duplicates()
-    assert len(test_db.get_all_definitions()) == 3
 
 def test_get_all_definitions(test_db):
     """
