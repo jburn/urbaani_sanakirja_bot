@@ -16,7 +16,7 @@ def test_db():
     cursor = db.cursor
 
     cursor.executemany("""
-            INSERT INTO words (word, title, explanation, examples, user, date, likes, dislikes, labels)
+            INSERT INTO words (word, title, explanation, examples, user, date, upvotes, downvotes, labels)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
@@ -65,7 +65,7 @@ def test_delete_duplicates(test_db):
     Test if deleting duplicates works
     """
     test_db.cursor.execute("""
-        INSERT INTO words (word, title, explanation, examples, user, date, likes, dislikes, labels)
+        INSERT INTO words (word, title, explanation, examples, user, date, upvotes, downvotes, labels)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         ('word', 'Word2', 'Definition of word', 'Example of word usage',
