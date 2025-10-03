@@ -2,6 +2,7 @@
 Bot functionality module for urbaani_sanakirja_bot
 """
 import asyncio
+import logging
 from uuid import uuid4
 from telegram import (
     Update,
@@ -22,14 +23,18 @@ from telegram.ext import (
 from word_database import WordDatabase
 from scraper import scan_for_links, scan_for_words
 
+logger = logging.getLogger(__name__)
 database = WordDatabase()
 
 async def run_scraper():
     """
     Run scraper to get words for backend
     """
+    logger.info("Scanning for links...")
     links = await scan_for_links()
+    logger.info("Scanning for definitions...")
     await scan_for_words(links, database)
+    logger.info("Word scan finished!")
 
 async def periodic_scrape():
     """
@@ -39,7 +44,7 @@ async def periodic_scrape():
         try:
             await run_scraper()
         except Exception as e:
-            print(f"Exception when scraping: {e}")
+            logging.error("Exception when scraping: %s", e)
         await asyncio.sleep(7 * 24 * 60 * 60)
 
 def build_reply(word: tuple) -> str:

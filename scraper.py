@@ -1,6 +1,7 @@
 """
 Scraping functions for bot backend
 """
+import logging
 import aiohttp
 from bs4 import BeautifulSoup
 from scraper_constants import (
@@ -10,6 +11,7 @@ from scraper_constants import (
 )
 from word_database import WordDatabase
 
+logger = logging.getLogger(__name__)
 
 async def fetch(session, url: str):
     """
@@ -20,7 +22,8 @@ async def fetch(session, url: str):
             if r.status != 200:
                 return None
             return await r.text()
-    except Exception:
+    except Exception as e:
+        logging.error(e)
         return None
 
 def parse_votes(vote_str: str) -> int:
@@ -30,8 +33,7 @@ def parse_votes(vote_str: str) -> int:
     vote_str = vote_str.lower().strip()
     if 'k' in vote_str:
         return int(float(vote_str.replace('k', '').replace(',', '.')) * 1000)
-    else:
-        return int(vote_str)
+    return int(vote_str)
 
 async def scan_for_links() -> list:
     """

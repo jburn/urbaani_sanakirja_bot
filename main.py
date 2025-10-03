@@ -2,10 +2,22 @@
 Main module for running the bot
 """
 import asyncio
+import logging
 from os import getenv
 from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 from bot import get_application_handlers, periodic_scrape
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.FileHandler("urbaani_sanakirja_bot.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 async def main():
     """
