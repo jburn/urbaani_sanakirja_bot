@@ -1,5 +1,7 @@
 # urbaani_sanakirja_bot
 
+**Retired early 2026, scraping would need to be updated after urbaanisanakirja.com site update**
+
 Telegram bot that gives you definitions for finnish words from urbaanisanakirja.com.
 
 ![Test Status](https://github.com/jburn/urbaani_sanakirja_bot/actions/workflows/tests.yml/badge.svg)
